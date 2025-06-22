@@ -1,7 +1,10 @@
+// src/store/slices/projectSlice.js
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
+import { setMilestones } from "./milestoneSlice";
 // highlight-next-line
-import { setMilestones } from "./milestoneSlice"; // 1. Import the action from the other slice
+import { createMilestone } from "./milestoneSlice"; // Import the action to listen for
 
 export const fetchProjects = createAsyncThunk(
   "projects/fetchProjects",
@@ -29,24 +32,18 @@ export const createProject = createAsyncThunk(
 
 export const fetchProjectDetails = createAsyncThunk(
   "projects/fetchProjectDetails",
-  // highlight-next-line
   async (projectId, { dispatch, rejectWithValue }) => {
-    // 2. Add `dispatch` to the thunk arguments
     try {
       const response = await api.get(`/projects/${projectId}`);
       const project = response.data.data?.project || response.data;
 
-      // highlight-start
-      // 3. After fetching, dispatch the action to sync the milestone slice
       if (project && project.milestones) {
         dispatch(setMilestones(project.milestones));
       } else {
-        // If there are no milestones, ensure the other slice is cleared
         dispatch(setMilestones([]));
       }
-      // highlight-end
 
-      return project; // Return the project for this slice's reducer
+      return project;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
     }
@@ -77,9 +74,23 @@ const projectSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(fetchProjectDetails.fulfilled, (state, action) => {
-        state.currentProject = action.payload; // This part remains the same
+        state.currentProject = action.payload;
         state.isLoading = false;
       })
+      // --- THE FIX IS HERE ---
+      // Listen for the successful creation of a milestone
+      // highlight-start
+      .addCase(createMilestone.fulfilled, (state, action) => {
+        // 1. Turn off the project-level loader
+        state.isLoading = false;
+
+        // 2. Add the new milestone to the current project's data
+        //    This keeps the UI in sync without a full refresh.
+        if (state.currentProject) {
+          state.currentProject.milestones.push(action.payload);
+        }
+      })
+      // highlight-end
       .addMatcher(
         (action) => action.type.endsWith("/pending"),
         (state) => {

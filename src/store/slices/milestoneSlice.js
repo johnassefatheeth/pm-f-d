@@ -1,3 +1,5 @@
+// src/store/slices/milestoneSlice.js
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
 
@@ -10,8 +12,6 @@ export const createMilestone = createAsyncThunk(
         `/${projectId}/milestones`,
         milestoneData
       );
-      console.log("Milestone created:", response.data);
-      // The backend returns the created milestone nested in the data object
       return response.data.data.milestone;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
@@ -22,9 +22,9 @@ export const createMilestone = createAsyncThunk(
 // Thunk to update an existing milestone
 export const updateMilestone = createAsyncThunk(
   "milestones/updateMilestone",
-  async ({ milestoneId, updateData }, { rejectWithValue }) => {
+  // highlight-next-line
+  async ({ projectId, milestoneId, updateData }, { rejectWithValue }) => {
     try {
-      // The API route for updating is /milestones/:id
       const response = await api.patch(
         `/${projectId}/milestones/${milestoneId}`,
         updateData
@@ -39,16 +39,13 @@ export const updateMilestone = createAsyncThunk(
 // Thunk to reorder milestones
 export const reorderMilestones = createAsyncThunk(
   "milestones/reorderMilestones",
-  async ({projectId,milestones}, { rejectWithValue }) => {
+  // highlight-next-line
+  async ({ projectId, milestones }, { rejectWithValue }) => {
     try {
-      // The API route for reordering is a PATCH to /milestones
-      // The body should be { milestones: [...] }
       await api.patch(`/${projectId}/milestones`, { milestones });
-      // The API doesn't return the updated list, only a success message.
-      // So, we return the original input to the reducer to update the state.
       return milestones;
     } catch (error) {
-        console.error("Error reordering milestones:", error);
+      console.error("Error reordering milestones:", error);
       return rejectWithValue(error.response?.data?.message);
     }
   }
@@ -57,14 +54,11 @@ export const reorderMilestones = createAsyncThunk(
 const milestoneSlice = createSlice({
   name: "milestones",
   initialState: {
-    // This will hold the milestones for the currently viewed project
     milestones: [],
     isLoading: false,
     error: null,
   },
   reducers: {
-    // Synchronous action to set milestones when a project is loaded.
-    // This is crucial for syncing state from the projectSlice.
     setMilestones: (state, action) => {
       state.milestones = action.payload;
     },
@@ -75,12 +69,10 @@ const milestoneSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(createMilestone.fulfilled, (state, action) => {
-        // Add the newly created milestone to our state array
         state.milestones.push(action.payload);
         state.isLoading = false;
       })
       .addCase(updateMilestone.fulfilled, (state, action) => {
-        // Find the updated milestone in the array and replace it
         const index = state.milestones.findIndex(
           (m) => m._id === action.payload._id
         );
@@ -90,7 +82,6 @@ const milestoneSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(reorderMilestones.fulfilled, (state, action) => {
-        // Update the order of each milestone in the state based on the action payload
         action.payload.forEach((updatedMilestone) => {
           const existingMilestone = state.milestones.find(
             (m) => m._id === updatedMilestone.id
@@ -99,11 +90,9 @@ const milestoneSlice = createSlice({
             existingMilestone.order = updatedMilestone.order;
           }
         });
-        // Sort the array by the new order to reflect the change in the UI
         state.milestones.sort((a, b) => a.order - b.order);
         state.isLoading = false;
       })
-      // Use addMatcher for generic pending/rejected cases to reduce boilerplate
       .addMatcher(
         (action) => action.type.endsWith("/pending"),
         (state) => {

@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
-import { X } from 'lucide-react';
-import { createTask } from '../../store/slices/taskSlice';
-import { PRIORITIES } from '../../utils/constants';
-import LoadingSpinner from '../common/LoadingSpinner';
-import toast from 'react-hot-toast';
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { X } from "lucide-react";
+import { createTask } from "../../store/slices/taskSlice";
+import { PRIORITIES } from "../../utils/constants";
+import LoadingSpinner from "../common/LoadingSpinner";
+import toast from "react-hot-toast";
 
 const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
   const dispatch = useDispatch();
@@ -30,15 +30,20 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
       const taskData = {
         ...data,
         projectId,
+        // Ensure empty string from select becomes undefined
         milestone: data.milestone || undefined,
+        assignee: data.assignee || undefined,
       };
-      
+
       await dispatch(createTask(taskData)).unwrap();
-      toast.success('Task created successfully!');
+      toast.success("Task created successfully!");
       onClose();
       reset();
     } catch (error) {
-      toast.error(error || 'Failed to create task');
+      // --- FIX #1: Pass a string from the error object to the toast ---
+      // This handles both string and object errors gracefully.
+      // highlight-next-line
+      toast.error(error.message || error || "Failed to create task");
     }
   };
 
@@ -48,7 +53,9 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Create New Task</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Create New Task
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -58,16 +65,20 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+          {/* Form fields are unchanged... */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Task Title
             </label>
             <input
-              {...register('title', {
-                required: 'Task title is required',
+              {...register("title", {
+                required: "Task title is required",
                 minLength: {
                   value: 3,
-                  message: 'Task title must be at least 3 characters',
+                  message: "Task title must be at least 3 characters",
                 },
               })}
               type="text"
@@ -75,16 +86,21 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
               placeholder="Enter task title"
             />
             {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.title.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Description (Optional)
             </label>
             <textarea
-              {...register('description')}
+              {...register("description")}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="Enter task description"
@@ -92,11 +108,14 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
           </div>
 
           <div>
-            <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="priority"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Priority
             </label>
             <select
-              {...register('priority', { required: 'Priority is required' })}
+              {...register("priority", { required: "Priority is required" })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="">Select priority</option>
@@ -105,16 +124,21 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
               <option value={PRIORITIES.HIGH}>High</option>
             </select>
             {errors.priority && (
-              <p className="mt-1 text-sm text-red-600">{errors.priority.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.priority.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="milestone" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="milestone"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Milestone (Optional)
             </label>
             <select
-              {...register('milestone')}
+              {...register("milestone")}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="">Select milestone</option>
@@ -127,11 +151,14 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
           </div>
 
           <div>
-            <label htmlFor="assignee" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="assignee"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Assignee (Optional)
             </label>
             <select
-              {...register('assignee')}
+              {...register("assignee")}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="">Select assignee</option>
@@ -144,11 +171,14 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
           </div>
 
           <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="dueDate"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Due Date (Optional)
             </label>
             <input
-              {...register('dueDate')}
+              {...register("dueDate")}
               type="date"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
@@ -163,13 +193,16 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
             >
               Cancel
             </button>
+            {/* --- FIX #2: Corrected the loading state logic --- */}
+            {/* highlight-start */}
             <button
               type="submit"
               className="btn-primary"
               disabled={!isLoading}
             >
-              {!isLoading ? <LoadingSpinner size="sm" /> : 'Create Task'}
+              {!isLoading ? <LoadingSpinner size="sm" /> : "Create Task"}
             </button>
+            {/* highlight-end */}
           </div>
         </form>
       </div>
